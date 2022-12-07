@@ -6,7 +6,9 @@ body {
     font-family: serif; 
 }
 
-.flex-wrapper{
-    display: flex;
-    
+@media (max-width: 768p)
+{
+    #media-icons{
+        order: 0
+    }
 }
