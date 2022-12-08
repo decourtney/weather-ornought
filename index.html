@@ -25,7 +25,7 @@
             <div id="search-bar" class="col-sm-12 col-md-6 col-lg-4">
                 <div class="input-group mb-3">
                     <span class="input-group-text material-symbols-outlined">Search</span>
-                    <input type="text" class="form-control" placeholder="Search" aria-label="Search">
+                    <input id="searchInput" type="text" class="form-control" placeholder="Search" aria-label="Search">
                 </div>
             </div>
 
@@ -38,21 +38,40 @@
     <main class="container-fluid">
         <!-- Background picture indicating current weather  -->
         <div class="row bg-secondary">
-            <div class="col-6">This is where the current weather is displayed for selected lcoation</div>
+            <div class="col-6">
+                <div id="current-section">
+                    <!-- Cards built in JS -->
+                </div>
+            </div>
             <div class="col-6">This is room for other stuff that I don't know I need yet</div>
         </div>
 
         <div class="row bg-danger">
             <div class="col-12">This will possibly be a weather alert banner</div>
         </div>
-      
+
         <div class="row bg-info">
             <!-- Save previous searches and create a small list with current weather -->
-            <div class="col-6">This will be the area for previous searches and associated weather in small format</div>
-            <div class="col-6">This is the area for the future forecasts</div>
-        </div>
+            <div class="col-4 p-1">
+                <div id="previous-section">
+                    <!-- Cards built in JS -->
+                </div>
+            </div>
+            <div class="col-8 p-1">
+                <div id="future-section">
+                    <ul>
+                        <li><a href="#tabs-5day">5-day Forecast</a></li>
+                        <li><a href="#tabs-8day">8-day Forecast</a></li>
+                    </ul>
+                    <div id="tabs-5day">
+                        <!-- Cards built in JS -->
+                        <div id="tabs-8day">
+                            <p>Blahzablah Zablah</p>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- If time permits try to add some weather news stuff -->
+                <!-- If time permits try to add some weather news stuff -->
     </main>
 
     <footer class="container-fluid position-absolute bottom-0 bg-primary">
