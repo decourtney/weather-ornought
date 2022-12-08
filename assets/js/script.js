@@ -5,6 +5,8 @@ $(function ()
     let currentSectionEl = $("#current-section");
     let dayTabEl = $("#tabs-5day");
 
+    let key = "c5e58c696459f0778b73495efecc2d5c";
+
     $(window).resize(function () { changeMobileSize() });
     $(window).ready(function () { changeMobileSize() });
     $(function () { $("#future-section").tabs(); });
@@ -22,9 +24,19 @@ $(function ()
         }
     }
 
-    function getUserInput(value)
+    function sendRequest(requestURL)
     {
-        console.log("returned " + value);
+        let requestedData = $.ajax({
+            url: requestURL,
+            method: "GET"
+        })
+    }
+
+    function getLatLong(value)
+    {
+        let requestURL = "http://api.openweathermap.org/geo/1.0/direct?q=" + value + "&limit=5&appid=" + key;
+        let latLong = sendRequest(requestURL);
+        console.log(latLong);
     }
 
     // Takes the element to append to and an array of forecast objects (just blank objects for now)
@@ -50,12 +62,14 @@ $(function ()
         let value = event.target.value.trim();
         if (keycode == "13" && value > "")
         {
-            getUserInput(value);
+            getLatLong(value);
+            searchInputEl.val("");
         }
     });
 
-    displayWeatherCards(dayTabEl, [1,2,3,4,5]); /* Temp placement for building/testing */
+    displayWeatherCards(dayTabEl, [1, 2, 3, 4, 5]); /* Temp placement for building/testing */
     displayWeatherCards(previousSectionEl, [1]);
     displayWeatherCards(currentSectionEl, [1]);
+
 });
 
