@@ -26,15 +26,16 @@ $(function ()
 
     function sendRequest(requestURL)
     {
-        let requestedData = $.ajax({
+        return $.ajax({
             url: requestURL,
             method: "GET"
         })
     }
 
+    // probably going to rename because this will handle all the requests
     function getLatLong(value)
     {
-        let requestURL = "http://api.openweathermap.org/geo/1.0/direct?q=" + value + "&limit=5&appid=" + key;
+        let requestURL = "http://api.openweathermap.org/geo/1.0/direct?q=" + value + ",US&limit=5&appid=" + key;
         let latLong = sendRequest(requestURL);
         console.log(latLong);
     }
