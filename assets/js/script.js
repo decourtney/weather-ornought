@@ -41,6 +41,7 @@ $(function ()
     // Called on load - If provided the coords will be used to calculate distance between the user and the returned weather locations
     function getUserCoords()
     {
+        // Use the users coords as an initial search | to get closest location
         if (navigator.geolocation)
         {
             navigator.geolocation.getCurrentPosition(function (position)
@@ -67,6 +68,7 @@ $(function ()
             method: "GET",
         }).then(function (response)
         {
+            // Default to the first of the 5 results. Then IF the user agreed to provide their location select the closest location
             let closestLocation = response[0];
             if (userCoords)
             {
@@ -168,6 +170,8 @@ $(function ()
                 }
             };
 
+            obj1.name = "";
+            obj1.state = "";
             el = dayTabEl;
         } else
         {
@@ -176,7 +180,7 @@ $(function ()
         }
 
         // Clear the element of children before displaying updated cards
-        el.empty();
+        // el.empty();
 
         // Now loop through the array of forecasts building a forecast object
         for (let i = 0; i < forecastArr.length; i++)
@@ -184,12 +188,12 @@ $(function ()
             let obj = {
                 name: obj1.name,
                 state: obj1.state,
-                temp: forecastArr[i].main.temp,
-                hiTemp: forecastArr[i].main.temp_max,
-                loTemp: forecastArr[i].main.temp_min,
-                realFeel: forecastArr[i].main.feels_like,
-                humidity: forecastArr[i].main.humidity,
-                windSpeed: forecastArr[i].wind.speed,
+                temp: Math.round(forecastArr[i].main.temp),
+                hiTemp: Math.round(forecastArr[i].main.temp_max),
+                loTemp: Math.round(forecastArr[i].main.temp_min),
+                realFeel: Math.round(forecastArr[i].main.feels_like),
+                humidity: Math.round(forecastArr[i].main.humidity),
+                windSpeed: Math.round(forecastArr[i].wind.speed),
                 windDirection: forecastArr[i].wind.deg,
                 icon: forecastArr[i].weather[0].main,
             }
@@ -203,20 +207,50 @@ $(function ()
     // Takes the element to append to and an array of forecast objects (just blank objects for now)
     function displayForecast(el, obj, index)
     {
+        // el.append(
+        //     $("<div>", { "class": "card d-inline-flex" }).append(
+        //         $("<div>", { "id": "day-card-" + index, "class": "card-body" }).append(
+        //             $("<h5>", { "class": "card-title" }).text(`${obj.name}`),
+        //             $("<h6>", { "class": "card-subtitle" }).text(`${obj.state}`),
+        //             $("<h2>", { "class": "card-subtitle" }).text(`${obj.temp}`),
+        //             $("<p>", { "class": "card-text" }).text(`${obj.hiTemp}`),
+        //             $("<p>", { "class": "card-text" }).text(`${obj.loTemp}`),
+        //             $("<p>", { "class": "card-text" }).text(`${obj.icon}`),
+        //             $("<p>", { "class": "card-text" }).text(`${obj.realFeel}`),
+        //             $("<p>", { "class": "card-text" }).text(`${obj.windSpeed}`),
+        //             $("<p>", { "class": "card-text" }).text(`${obj.windDirection}`),
+        //             $("<p>", { "class": "card-text" }).text(`${obj.humidity}`),
+        //         )
+        //     )
+        // );
+
+        // Build Current Weather Card
         el.append(
-            $("<div>", { "class": "card d-inline-flex" }).append(
-                $("<div>", { "id": "day-card-" + index, "class": "card-body" }).append(
-                    $("<h5>", { "class": "card-title" }).text(`${obj.name}`),
-                    $("<h6>", { "class": "card-subtitle" }).text(`${obj.state}`),
-                    $("<h2>", { "class": "card-subtitle" }).text(`${obj.temp}`),
-                    $("<p>", { "class": "card-text" }).text(`${obj.hiTemp}`),
-                    $("<p>", { "class": "card-text" }).text(`${obj.loTemp}`),
-                    $("<p>", { "class": "card-text" }).text(`${obj.icon}`),
-                    $("<p>", { "class": "card-text" }).text(`${obj.realFeel}`),
-                    $("<p>", { "class": "card-text" }).text(`${obj.windSpeed}`),
-                    $("<p>", { "class": "card-text" }).text(`${obj.windDirection}`),
-                    $("<p>", { "class": "card-text" }).text(`${obj.humidity}`),
-                )
+            $("<div>", { "class": "card d-inline-felx" }).append(
+                $("<div>", { "id": "day-card-text", "class": "card-body" }).append(
+                    $("<h5>").text(`${obj.name}`),
+                    $("<h6>").text(`${obj.state}`),
+                    $("<div>", { "class": "row" }).append(
+                        $("<div>", { "class": "col-6 fw-bold" }).append(
+                            $("<h2>").text(`${obj.temp}\u00B0`),
+                            $("<p>").append(
+                                $("<span>", { "class": "material-symbols-outlined" }).text(`${obj.hiTemp}\u00B0\u25B2`),
+                                $("<span>", { "class": "material-symbols-outlined" }).text(`${obj.loTemp}\u00B0\u25BC`)
+                            )
+                        ),
+                        $("<div>", { "class": "col-6" }).append(
+                            $("<img>", { "class": "w-100", "src": "./assets/images/rain.gif", "alt": "Rain Cloud" }),
+                            $("<figcaption>", {"class": "fs-5 text-center"}).text(`${obj.icon}`)
+                        )
+                    ),
+                    $("<div>", { "class": "row mx-1 mt-1" }).append(
+                        $("<div>", { "class": "col" }).append(
+                            $("<p>").text(`Real Feel: ${obj.realFeel}\u00B0`),
+                            $("<p>").text(`Wind: ${obj.windSpeed} mph direction`),
+                            $("<p>").text(`Humidity: ${obj.humidity}\u0025`)
+                        )
+                    )
+                ),
             )
         );
     }
