@@ -1,17 +1,28 @@
 $(function ()
 {
     let searchInputEl = $("#searchInput");
-    let previousSectionEl = $("#previous-section");
+    let previousSectionEl = $("#previous-section .card-body");
     let currentSectionEl = $("#current-section");
     let dayTabEl = $("#tabs-5day");
 
     let key = "c5e58c696459f0778b73495efecc2d5c";
     let userCoords;
-    let recentSearches = [];
 
     $(window).resize(function () { changeMobileSize() });
     $(window).ready(function () { changeMobileSize() });
     $(function () { $("#future-section").tabs(); });
+
+    previousSectionEl.on("click", getRecentSearch);
+    searchInputEl.on("keypress", function (event)
+    {
+        let keycode = event.keycode || event.which;
+        let value = event.target.value.trim();
+        if (keycode == "13" && value > "")
+        {
+            requestLocation(value);
+            searchInputEl.val("");
+        }
+    });
 
     // Called on load and resize events
     function changeMobileSize()
@@ -34,15 +45,21 @@ $(function ()
         {
             navigator.geolocation.getCurrentPosition(function (position)
             {
-                userCoords = position;
-                console.log(userCoords);
+                $.ajax({
+                    url: `http://api.openweathermap.org/geo/1.0/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&limit=${1}&appid=${key}`,
+                    method: "GET"
+                }).then(function (response)
+                {
+                    userCoords = response[0];
+                    console.log(userCoords);
+                })
             });
         }
     }
 
     function requestLocation(value)
     {
-        let url = ("https://api.openweathermap.org/geo/1.0/direct?q=" + value + ",US&limit=5&appid=" + key);
+        let url = (`https://api.openweathermap.org/geo/1.0/direct?q=${value},US&limit=5&appid=${key}`);
 
         // Might have to use first .then to handle errors
         $.ajax({
@@ -56,7 +73,7 @@ $(function ()
                 let closestDistance = Infinity;
                 for (let i = 0; i < response.length; i++)
                 {
-                    let distance = getDistance(userCoords.coords.latitude, response[i].lat, userCoords.coords.longitude, response[i].lon);
+                    let distance = getDistance(userCoords.lat, response[i].lat, userCoords.lon, response[i].lon);
                     if (distance < closestDistance)
                     {
                         closestDistance = distance;
@@ -68,14 +85,13 @@ $(function ()
             return closestLocation;
         }).then(function (data)
         {
-            recentSearches.push(data.name + ", " + data.state)
-            localStorage.setItem("recentSearches", JSON.stringify(recentSearches));
-
+            setLocalStorage(data);
             requestForecast(data);
             console.log(data);
         });
     }
 
+    // Get the distance between two positions
     function getDistance(lat1, lat2, lon1, lon2)
     {
         // The math module contains a function
@@ -159,6 +175,9 @@ $(function ()
             el = currentSectionEl;
         }
 
+        // Clear the element of children before displaying updated cards
+        el.empty();
+
         // Now loop through the array of forecasts building a forecast object
         for (let i = 0; i < forecastArr.length; i++)
         {
@@ -202,20 +221,82 @@ $(function ()
         );
     }
 
-    searchInputEl.on("keypress", function (event)
+    function displayRecentSearch()
     {
-        let keycode = event.keycode || event.which;
-        let value = event.target.value.trim();
-        if (keycode == "13" && value > "")
-        {
-            requestLocation(value);
-            searchInputEl.val("");
-        }
-    });
+        let previousSearch = getLocalStorage();
+        previousSearch = previousSearch.reverse();
 
-    // displayForecast(dayTabEl, [1, 2, 3, 4, 5]); /* Temp placement for building/testing */
-    // displayWeatherCards(previousSectionEl, [1]);
-    // displayForecast(currentSectionEl, [1]);
+        // Clear current child buttons
+        previousSectionEl.empty();
+
+        // Create and append updated buttons
+        previousSearch.forEach(element =>
+        {
+            previousSectionEl.append($("<button type='button' class='btn btn-outline-secondary'>").text(`${element}`));
+        });
+    }
+
+    function getRecentSearch(event)
+    {
+        let eventText = event.target.textContent;
+        requestLocation(eventText);
+    }
+
+    function getLocalStorage()
+    {
+        let storage = JSON.parse(localStorage.getItem("recentSearches"));
+        return storage;
+    }
+
+    function setLocalStorage(obj)
+    {
+        // Only need city and state names saved
+        let tmpValue = obj.name + ", " + obj.state;
+        let storage = JSON.parse(localStorage.getItem("recentSearches"));
+
+        if (storage)
+        {
+            // If city/state already exists in localStorage then remove the duplicate from storage
+            if (storage.includes)
+            {
+                storage = storage.filter(function (e) { return e !== tmpValue })
+            }
+            // If the localStorage has 5(cap) elements then remove the top element
+            if (storage.length > 4)
+            {
+                storage.shift();
+            }
+
+            storage.push(tmpValue);
+        } else
+        {
+            storage = [tmpValue];
+        }
+
+        localStorage.setItem("recentSearches", JSON.stringify(storage));
+        displayRecentSearch();
+    }
+
+    function loadDefaultContent()
+    {
+        // Get localStorage and preload a search from recent searches, or the users coords, or a basic U.S. search 
+        let previousSearch = getLocalStorage();
+        if (previousSearch)
+        {
+            requestLocation(previousSearch.at(-1))
+        } else if (userCoords)
+        {
+            requestLocation(userCoords.name + ", " + userCoords.state);
+        } else
+        {
+            requestLocation("United States");
+        }
+
+    }
+
+
+
     getUserCoords();
+    loadDefaultContent();
 });
 
