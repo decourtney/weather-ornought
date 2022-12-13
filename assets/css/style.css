@@ -2,10 +2,6 @@
     box-sizing: border-box;
 }
 
-/* html {
-    font-size: 62.5%;
-} */
-
 body {
     font-family: serif;
     font-size: 100%;
@@ -24,11 +20,11 @@ main {
     max-width: 1440px;
 }
 
-.card {
-    /* width: 10rem; */
+/* .card {
+    width: 10rem;
     margin: 2px 5px;
     line-height: .5rem;
-}
+} */
 
 .card p{
     font-size: 1.5rem;
@@ -38,12 +34,19 @@ main {
 
 #current-section .card {
     width: 30rem;
-    margin-left: 10%;
 }
 
-#previous-section {
-    /* width: 100%; */
+#future-section .card{
+    width: 11rem;
 }
+
+#future-section .card p{
+    font-size: 1rem;
+}
+
+/* #previous-section {
+    width: 100%;
+} */
 
 @media (max-width: 768p) {
     #media-icons {
