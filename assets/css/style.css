@@ -7,12 +7,15 @@ body {
     font-size: 100%;
 }
 
-h1, h2, h5, h6{
+h1,
+h2,
+h5,
+h6 {
     margin: 0;
     font-size: 1.5rem;
 }
 
-h2{
+h2 {
     font-size: 8rem;
 }
 
@@ -26,7 +29,7 @@ main {
     line-height: .5rem;
 } */
 
-.card p{
+.card p {
     font-size: 1.5rem;
     font-weight: 500;
     line-height: 1rem;
@@ -36,11 +39,11 @@ main {
     width: 30rem;
 }
 
-#future-section .card{
+#future-section .card {
     width: 11rem;
 }
 
-#future-section .card p{
+#future-section .card p {
     font-size: 1rem;
 }
 
@@ -49,7 +52,5 @@ main {
 } */
 
 @media (max-width: 768p) {
-    #media-icons {
-        order: 0
-    }
+    
 }
