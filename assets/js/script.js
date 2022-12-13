@@ -3,7 +3,8 @@ $(function ()
     let searchInputEl = $("#searchInput");
     let previousSectionEl = $("#previous-section .card-body");
     let currentSectionEl = $("#current-section");
-    let dayTabEl = $("#tabs-5day");
+    let dayTabEl = $("#tabs-5day .row");
+    let futureCardEl = $("#tabs-5day");
 
     let key = "c5e58c696459f0778b73495efecc2d5c";
     let userCoords;
@@ -11,18 +12,6 @@ $(function ()
     $(window).resize(function () { changeMobileSize() });
     $(window).ready(function () { changeMobileSize() });
     $(function () { $("#future-section").tabs(); });
-
-    previousSectionEl.on("click", getRecentSearch);
-    searchInputEl.on("keypress", function (event)
-    {
-        let keycode = event.keycode || event.which;
-        let value = event.target.value.trim();
-        if (keycode == "13" && value > "")
-        {
-            requestLocation(value);
-            searchInputEl.val("");
-        }
-    });
 
     // Called on load and resize events
     function changeMobileSize()
@@ -148,6 +137,8 @@ $(function ()
     {
         let forecastArr = []
         let el;
+        let highTemp = 0;
+        let lowTemp = Infinity;
 
         // If a list is included then its a 5day/3hour forecast else its the current forecast
         if (obj2.list)
@@ -163,6 +154,17 @@ $(function ()
                 // First split on the space which returns an array of 1. Next split the one index by the tac('-') = ['YYYY', 'MM', 'DD']
                 let currentDate = (obj2.list[i].dt_txt.split(" ", 1))[0].split("-", 3);
                 let previousDate = (obj2.list[i - 1].dt_txt.split(" ", 1))[0].split("-", 3);
+
+                // Grab the highest and lowest temp in the range of forecast for one day
+                if (obj2.list[i].main.temp_max > highTemp)
+                {
+                    highTemp = obj2.list[i].main.temp_max;
+                }
+                if (obj2.list[i].main.temp_min < lowTemp)
+                {
+                    lowTemp = obj2.list[i].main.temp_min;
+                }
+
                 // Compare just the date
                 if (currentDate[2] != previousDate[2])
                 {
@@ -170,17 +172,18 @@ $(function ()
                 }
             };
 
-            obj1.name = "";
-            obj1.state = "";
             el = dayTabEl;
         } else
         {
+            highTemp = obj2.main.temp_max;
+            lowTemp = obj2.main.temp_min;
             forecastArr.push(obj2);
             el = currentSectionEl;
+            console.log(obj2)
         }
 
         // Clear the element of children before displaying updated cards
-        // el.empty();
+        el.empty();
 
         // Now loop through the array of forecasts building a forecast object
         for (let i = 0; i < forecastArr.length; i++)
@@ -189,13 +192,15 @@ $(function ()
                 name: obj1.name,
                 state: obj1.state,
                 temp: Math.round(forecastArr[i].main.temp),
-                hiTemp: Math.round(forecastArr[i].main.temp_max),
-                loTemp: Math.round(forecastArr[i].main.temp_min),
+                hiTemp: Math.round(highTemp),
+                loTemp: Math.round(lowTemp),
                 realFeel: Math.round(forecastArr[i].main.feels_like),
                 humidity: Math.round(forecastArr[i].main.humidity),
                 windSpeed: Math.round(forecastArr[i].wind.speed),
-                windDirection: forecastArr[i].wind.deg,
-                icon: forecastArr[i].weather[0].main,
+                windDirection: getCardinalDirection(forecastArr[i].wind.deg),
+                day: dayjs(forecastArr[i].dt_txt, "YYYY-MM-DD").format("dddd"),
+                iconLabel: forecastArr[i].weather[0].main,
+                icon: getWeatherIcon(forecastArr[i].weather[0].main)
             }
 
             // Each iteration send the html element, forecast object, and current index to the displayForecast function
@@ -204,55 +209,88 @@ $(function ()
         }
     }
 
+    function getCardinalDirection(angle)
+    {
+        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        return directions[Math.round(angle / 45) % 8];
+    }
+
+    function getWeatherIcon(value)
+    {
+        switch (value)
+        {
+            case "Clear":
+                value = "./assets/images/sun.gif";
+                break;
+            case "Clouds":
+                value = "./assets/images/clouds.gif";
+                break;
+            case "Rain":
+                value = "./assets/images/rain.gif";
+                break;
+            case "Thunderstorm":
+                value = "./assets/images/storm.gif";
+                break;
+            case "Snow":
+                value = "./assets/images/snow.gif";
+                break;
+            case "Mist":
+                value = "./assets/images/foggy.gif";
+        }
+
+        return value;
+    }
+
     // Takes the element to append to and an array of forecast objects (just blank objects for now)
     function displayForecast(el, obj, index)
     {
-        // el.append(
-        //     $("<div>", { "class": "card d-inline-flex" }).append(
-        //         $("<div>", { "id": "day-card-" + index, "class": "card-body" }).append(
-        //             $("<h5>", { "class": "card-title" }).text(`${obj.name}`),
-        //             $("<h6>", { "class": "card-subtitle" }).text(`${obj.state}`),
-        //             $("<h2>", { "class": "card-subtitle" }).text(`${obj.temp}`),
-        //             $("<p>", { "class": "card-text" }).text(`${obj.hiTemp}`),
-        //             $("<p>", { "class": "card-text" }).text(`${obj.loTemp}`),
-        //             $("<p>", { "class": "card-text" }).text(`${obj.icon}`),
-        //             $("<p>", { "class": "card-text" }).text(`${obj.realFeel}`),
-        //             $("<p>", { "class": "card-text" }).text(`${obj.windSpeed}`),
-        //             $("<p>", { "class": "card-text" }).text(`${obj.windDirection}`),
-        //             $("<p>", { "class": "card-text" }).text(`${obj.humidity}`),
-        //         )
-        //     )
-        // );
-
-        // Build Current Weather Card
-        el.append(
-            $("<div>", { "class": "card d-inline-felx" }).append(
-                $("<div>", { "id": "day-card-text", "class": "card-body" }).append(
-                    $("<h5>").text(`${obj.name}`),
-                    $("<h6>").text(`${obj.state}`),
-                    $("<div>", { "class": "row" }).append(
-                        $("<div>", { "class": "col-6 fw-bold" }).append(
-                            $("<h2>").text(`${obj.temp}\u00B0`),
-                            $("<p>").append(
-                                $("<span>", { "class": "material-symbols-outlined" }).text(`${obj.hiTemp}\u00B0\u25B2`),
-                                $("<span>", { "class": "material-symbols-outlined" }).text(`${obj.loTemp}\u00B0\u25BC`)
+        if (el === currentSectionEl)
+        {
+            // Build Current Weather Card
+            el.append(
+                $("<div>", { "class": "card d-inline-flex" }).append(
+                    $("<div>", { "id": "day-card-text", "class": "card-body" }).append(
+                        $("<h5>").text(`${obj.name}`),
+                        $("<h6>").text(`${obj.state}`),
+                        $("<div>", { "class": "row" }).append(
+                            $("<div>", { "class": "col-6 fw-bold" }).append(
+                                $("<h2>").text(`${obj.temp}\u00B0`),
+                                $("<p>").append(
+                                    $("<span>", { "class": "material-symbols-outlined fs-5" }).text(`\u25B2${obj.hiTemp}\u00B0\xa0`),
+                                    $("<span>", { "class": "material-symbols-outlined fs-5" }).text(`\u25BC${obj.loTemp}\u00B0`)
+                                )
+                            ),
+                            $("<div>", { "class": "col-6" }).append(
+                                $("<img>", { "class": "w-100", "src": `${obj.icon}`, "alt": "Rain Cloud" }),
+                                $("<figcaption>", { "class": "fs-5 text-center" }).text(`${obj.iconLabel}`)
                             )
                         ),
-                        $("<div>", { "class": "col-6" }).append(
-                            $("<img>", { "class": "w-100", "src": "./assets/images/rain.gif", "alt": "Rain Cloud" }),
-                            $("<figcaption>", {"class": "fs-5 text-center"}).text(`${obj.icon}`)
+                        $("<div>", { "class": "row mx-1 mt-1" }).append(
+                            $("<div>", { "class": "col" }).append(
+                                $("<p>").text(`Real Feel: ${obj.realFeel}\u00B0`),
+                                $("<p>").text(`Wind: ${obj.windSpeed} mph ${obj.windDirection}`),
+                                $("<p>").text(`Humidity: ${obj.humidity}\u0025`)
+                            )
                         )
                     ),
-                    $("<div>", { "class": "row mx-1 mt-1" }).append(
-                        $("<div>", { "class": "col" }).append(
-                            $("<p>").text(`Real Feel: ${obj.realFeel}\u00B0`),
-                            $("<p>").text(`Wind: ${obj.windSpeed} mph direction`),
-                            $("<p>").text(`Humidity: ${obj.humidity}\u0025`)
+                )
+            );
+        } else
+        {
+            // Build 5-day Weather Card
+            el.append(
+                $("<div>", { "class": "card d-inline-flex col-2 m-1 text-center" }).append(
+                    $("<div>", { "id": "day-card-" + index, "class": "card-body" }).append(
+                        $("<img>", { "class": "w-100", "src": `${obj.icon}`, "alt": "Rain Cloud" }),
+                        $("<p>").text(`${obj.day}`),
+                        $("<p>").append(
+                            $("<span>", { "class": "material-symbols-outlined fs-5" }).text(`${obj.hiTemp}\u00B0\xa0`),
+                            $("<span>", { "class": "material-symbols-outlined fs-5" }).text(`${obj.loTemp}\u00B0`)
                         )
                     )
-                ),
+                )
             )
-        );
+        }
     }
 
     function displayRecentSearch()
@@ -266,7 +304,7 @@ $(function ()
         // Create and append updated buttons
         previousSearch.forEach(element =>
         {
-            previousSectionEl.append($("<button type='button' class='btn btn-outline-secondary'>").text(`${element}`));
+            previousSectionEl.append($("<button type='button' class='btn btn-outline-secondary text-start'>").text(`${element}`));
         });
     }
 
@@ -328,9 +366,18 @@ $(function ()
 
     }
 
-
+    previousSectionEl.on("click", getRecentSearch);
+    searchInputEl.on("keypress", function (event)
+    {
+        let keycode = event.keycode || event.which;
+        let value = event.target.value.trim();
+        if (keycode == "13" && value > "")
+        {
+            requestLocation(value);
+            searchInputEl.val("");
+        }
+    });
 
     getUserCoords();
     loadDefaultContent();
 });
-
