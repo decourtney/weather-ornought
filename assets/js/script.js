@@ -24,12 +24,15 @@ $(function ()
             $("#previous-section").insertAfter("#future-section");
             futureSectionEl.children(".card").width("3rem");
             $("#tabs-5day .card .card-body").attr("class", "fs-6");
+            currentSectionEl.children(".card").width("25rem");
+            $("h2").css("fontSize", "100px");
         } else
         {
             $("#search-bar").insertBefore("#media-icons");
             $("#previous-section").insertBefore("#future-section");
             futureSectionEl.children(".card").width("10rem");
-
+            currentSectionEl.children(".card").width("30rem")
+            $("h2").css("fontSize", "120px");
         }
     }
 
@@ -84,7 +87,6 @@ $(function ()
         {
             setLocalStorage(data);
             requestForecast(data);
-            console.log(data);
         });
     }
 
@@ -132,7 +134,6 @@ $(function ()
                 method: "GET",
             }).then(function (response)
             {
-                console.log(response);
                 constructForecastObject(obj, response)
             })
         }
@@ -143,24 +144,38 @@ $(function ()
         let forecastArr = []
         let el;
 
-
         // If a list is included then its a 5day/3hour forecast else its the current forecast
         if (obj2.list)
         {
             let highTemp = 0;
             let lowTemp = Infinity;
+            let todaysDate = dayjs().format("DD");
 
             // The api call returns 40 forecasts in 3 hour increments spanning across 5 days but I only need a single
-            // forecast for each day. This forloop iterates through each object comparing the dates and pushing the first
+            // forecast for each day.This forloop iterates through each object comparing the dates and pushing the first
             // forecast that matches a different date.
-            for (let i = 1; i < obj2.list.length && forecastArr.length < 5; i++)
+            for (let i = 0; i < obj2.list.length && forecastArr.length < 5; i++)
             {
                 // The first object is pushed so we start the loop at index of 1. Now compare the current index with the
-                // previous and retain the first instance of a new date. The dates are formatted "YYYY-MM-DD hh:mm:ss" - 
+                // previous and retain the first instance of a new date. The dates are formatted "YYYY-MM-DD hh:mm:ss" -
                 // First split on the space which returns an array of 1. Next split the one index by the tac('-') = ['YYYY', 'MM', 'DD']
-                let currentIndex = (obj2.list[i].dt_txt.split(" ", 1))[0].split("-", 3);
-                let previousIndex = (obj2.list[i - 1].dt_txt.split(" ", 1))[0].split("-", 3);
-                let todaysDate = dayjs().format("DD");
+                let currentIndexDate = (obj2.list[i].dt_txt.split(" ", 1))[0].split("-", 3)[2];
+
+                if (currentIndexDate == todaysDate)
+                {
+                    continue;
+                }
+
+                if (forecastArr.length < 1)
+                {
+                    highTemp = obj2.list[i].main.temp_max;
+                    lowTemp = obj2.list[i].main.temp_min;
+                    forecastArr.push(obj2.list[i]);
+                    continue;
+                }
+
+                let previousIndexDate = (obj2.list[i - 1].dt_txt.split(" ", 1))[0].split("-", 3)[2];
+
 
                 // Grab the highest and lowest temp in the range of forecast for one day
                 if (obj2.list[i].main.temp_max > highTemp)
@@ -171,25 +186,21 @@ $(function ()
                 {
                     lowTemp = obj2.list[i].main.temp_min;
                 }
-                
+
                 // Compare just the date
-                if (currentIndex[2] != previousIndex[2])
+                if (currentIndexDate != previousIndexDate)
                 {
-                    if (currentIndex[2] != todaysDate)
-                    {
-                        obj2.list[i].main.temp_max = highTemp;
-                        obj2.list[i].main.temp_min = lowTemp;
-                        forecastArr.push(obj2.list[i]);
-                    }
+                    obj2.list[i].main.temp_max = highTemp;
+                    obj2.list[i].main.temp_min = lowTemp;
+                    forecastArr.push(obj2.list[i]);
                 }
-            };
+            }
 
             el = futureSectionEl;
         } else
         {
             forecastArr.push(obj2);
             el = currentSectionEl;
-            console.log(obj2)
         }
 
         // Clear the element of children before displaying updated cards
@@ -198,7 +209,7 @@ $(function ()
         // Now loop through the array of forecasts building a forecast object
         for (let i = 0; i < forecastArr.length; i++)
         {
-            let obj = {
+            let weatherObj = {
                 name: obj1.name,
                 state: obj1.state,
                 temp: Math.round(forecastArr[i].main.temp),
@@ -211,13 +222,14 @@ $(function ()
                 date: dayjs(forecastArr[i].dt_txt, "YYYY-MM-DD").format("MMM DD, 2022"),
                 day: dayjs(forecastArr[i].dt_txt, "YYYY-MM-DD").format("dddd"),
                 iconLabel: forecastArr[i].weather[0].main,
-                icon: getWeatherIcon(forecastArr[i].weather[0].main)
+                icon: getWeatherIcon(forecastArr[i].weather[0].main), 
             }
 
             // Each iteration send the html element, forecast object, and current index to the displayForecast function
-            displayForecast(el, obj, i);
-            console.log(obj);
+            console.log(weatherObj);
+            displayForecast(el, weatherObj, i);
         }
+        console.log(obj2);
     }
 
     function getCardinalDirection(angle)
@@ -232,24 +244,30 @@ $(function ()
         {
             case "Clear":
                 value = "./assets/images/sun.gif";
+                iconImage = "./assets/images/clear.jpg"
                 break;
             case "Clouds":
                 value = "./assets/images/clouds.gif";
+                iconImage = "./assets/images/clouds.jpg"
                 break;
             case "Rain":
                 value = "./assets/images/rain.gif";
+                iconImage = "./assets/images/rain.jpg"
                 break;
             case "Thunderstorm":
                 value = "./assets/images/storm.gif";
+                iconImage = "./assets/images/storm.jpg"
                 break;
             case "Snow":
                 value = "./assets/images/snow.gif";
+                iconImage = "./assets/images/snow.jpg"
                 break;
             case "Mist":
                 value = "./assets/images/foggy.gif";
+                iconImage = "./assets/images/mist.jpg"
         }
 
-        return value;
+        return [value, iconImage];
     }
 
     // Takes the element to append to and an array of forecast objects (just blank objects for now)
@@ -257,9 +275,12 @@ $(function ()
     {
         if (el === currentSectionEl)
         {
+            $("#current").css("background-image", `url(${obj.icon[1]}`);
+            $("#current").css("background-size", "cover");
+
             // Build Current Weather Card
             el.append(
-                $("<div>", { "class": "card d-inline-flex m-2" }).append(
+                $("<div>", { "class": "card d-inline-flex m-2  shadow" }).append(
                     $("<div>", { "id": "day-card-text", "class": "card-body" }).append(
                         $("<div>", { "class": "row" }).append(
                             $("<div>", { "class": "col-6" }).append(
@@ -279,7 +300,7 @@ $(function ()
                                 )
                             ),
                             $("<div>", { "class": "col-6" }).append(
-                                $("<img>", { "class": "w-100", "src": `${obj.icon}`, "alt": "Rain Cloud" }),
+                                $("<img>", { "class": "w-100", "src": `${obj.icon[0]}`, "alt": "Rain Cloud" }),
                                 $("<figcaption>", { "class": "fs-5 text-center" }).text(`${obj.iconLabel}`)
                             )
                         ),
@@ -297,9 +318,9 @@ $(function ()
         {
             // Build 5-day Weather Card
             el.append(
-                $("<div>", { "class": "card d-inline-flex m-1 text-center" }).append(
+                $("<div>", { "class": "card d-inline-flex m-1 text-center shadow" }).append(
                     $("<div>", { "id": "day-card-" + index, "class": "card-body" }).append(
-                        $("<img>", { "class": "w-100", "src": `${obj.icon}`, "alt": "Rain Cloud" }),
+                        $("<img>", { "class": "w-100", "src": `${obj.icon[0]}`, "alt": "Rain Cloud" }),
                         $("<p>", { "id": "day-of-week", "class": "text-nowrap overflow-hidden" }).text(`${obj.day}`),
                         $("<p>").append(
                             $("<span>", { "class": "material-symbols-outlined fs-5" }).text(`${obj.hiTemp}\u00B0\xa0`),
@@ -323,7 +344,7 @@ $(function ()
         // Create and append updated buttons
         previousSearch.forEach(element =>
         {
-            previousSectionEl.append($("<button type='button' class='col-4 col-lg-12 btn btn-outline-secondary text-start'>").text(`${element}`));
+            previousSectionEl.append($("<button type='button' class='col-4 col-lg-12 btn btn-outline-secondary text-start shadow my-1'>").text(`${element}`));
         });
     }
 
@@ -398,7 +419,6 @@ $(function ()
             searchInputEl.val("");
         }
     });
-
 
     loadDefaultContent();
 });
