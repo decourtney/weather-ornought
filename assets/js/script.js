@@ -10,20 +10,17 @@ $(function ()
 
     $(window).resize(function () { changeMobileSize() });
     $(window).ready(function () { changeMobileSize() });
-    // $(function () { $("#future-section").tabs(); });
 
     // Called on load and resize events
     function changeMobileSize()
     {
-        let shortDay;
-        let longDay;
         if ($(window).width() < 768)
         {
             //Tablet and smaller
             $("#search-bar").insertAfter("#media-icons");
             $("#previous-section").insertAfter("#future-section");
-            futureSectionEl.children(".card").width("3rem");
-            $("#tabs-5day .card .card-body").attr("class", "fs-6");
+            futureSectionEl.children(".card").width("4rem");
+            $("#future-section .card .card-body").attr("class", "fs-6");
             currentSectionEl.children(".card").width("25rem");
             $("h2").css("fontSize", "100px");
         } else
@@ -46,12 +43,12 @@ $(function ()
             {
                 $.ajax({
                     url: `http://api.openweathermap.org/geo/1.0/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&limit=${1}&appid=${key}`,
-                    method: "GET"
-                }).then(function (response)
-                {
-                    userCoords = response[0];
-                    console.log(userCoords);
-                })
+                    method: "GET",
+                    success: function (data)
+                    {
+                        userCoords = data[0];
+                    }
+                });
             });
         }
     }
@@ -60,7 +57,6 @@ $(function ()
     {
         let url = (`https://api.openweathermap.org/geo/1.0/direct?q=${value},US&limit=5&appid=${key}`);
 
-        // Might have to use first .then to handle errors
         $.ajax({
             url: url,
             method: "GET",
@@ -139,6 +135,7 @@ $(function ()
         }
     }
 
+    // Creates an object from the weather data
     function constructForecastObject(obj1, obj2)
     {
         let forecastArr = []
@@ -210,8 +207,8 @@ $(function ()
         for (let i = 0; i < forecastArr.length; i++)
         {
             let weatherObj = {
-                name: obj1.name,
-                state: obj1.state,
+                name: (obj1.name == null) ? "" : obj1.name,
+                state: (obj1.state == null) ? "" : obj1.state,
                 temp: Math.round(forecastArr[i].main.temp),
                 hiTemp: Math.round(forecastArr[i].main.temp_max),
                 loTemp: Math.round(forecastArr[i].main.temp_min),
@@ -222,52 +219,55 @@ $(function ()
                 date: dayjs(forecastArr[i].dt_txt, "YYYY-MM-DD").format("MMM DD, 2022"),
                 day: dayjs(forecastArr[i].dt_txt, "YYYY-MM-DD").format("dddd"),
                 iconLabel: forecastArr[i].weather[0].main,
-                icon: getWeatherIcon(forecastArr[i].weather[0].main), 
+                icon: getWeatherIcon(forecastArr[i].weather[0].main),
             }
 
             // Each iteration send the html element, forecast object, and current index to the displayForecast function
-            console.log(weatherObj);
             displayForecast(el, weatherObj, i);
         }
-        console.log(obj2);
     }
 
+    // Converts angle to directions
     function getCardinalDirection(angle)
     {
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
         return directions[Math.round(angle / 45) % 8];
     }
 
+    // Gets the weather icon and background image associate with weather type
     function getWeatherIcon(value)
     {
+        let iconBG;
+        let icon = value;
+
         switch (value)
         {
             case "Clear":
-                value = "./assets/images/sun.gif";
-                iconImage = "./assets/images/clear.jpg"
+                icon = "./assets/images/sun.gif";
+                iconBG = "./assets/images/clear.jpg"
                 break;
             case "Clouds":
-                value = "./assets/images/clouds.gif";
-                iconImage = "./assets/images/clouds.jpg"
+                icon = "./assets/images/clouds.gif";
+                iconBG = "./assets/images/clouds.jpg"
                 break;
             case "Rain":
-                value = "./assets/images/rain.gif";
-                iconImage = "./assets/images/rain.jpg"
+                icon = "./assets/images/rain.gif";
+                iconBG = "./assets/images/rain.jpg"
                 break;
             case "Thunderstorm":
-                value = "./assets/images/storm.gif";
-                iconImage = "./assets/images/storm.jpg"
+                icon = "./assets/images/storm.gif";
+                iconBG = "./assets/images/storm.jpg"
                 break;
             case "Snow":
-                value = "./assets/images/snow.gif";
-                iconImage = "./assets/images/snow.jpg"
+                icon = "./assets/images/snow.gif";
+                iconBG = "./assets/images/snow.jpg"
                 break;
-            case "Mist":
-                value = "./assets/images/foggy.gif";
-                iconImage = "./assets/images/mist.jpg"
+            default:
+                icon = "./assets/images/foggy.gif";
+                iconBG = "./assets/images/mist.jpg"
         }
 
-        return [value, iconImage];
+        return [icon, iconBG];
     }
 
     // Takes the element to append to and an array of forecast objects (just blank objects for now)
@@ -280,7 +280,7 @@ $(function ()
 
             // Build Current Weather Card
             el.append(
-                $("<div>", { "class": "card d-inline-flex m-2  shadow" }).append(
+                $("<div>", { "class": "card d-inline-flex m-2 shadow" }).append(
                     $("<div>", { "id": "day-card-text", "class": "card-body" }).append(
                         $("<div>", { "class": "row" }).append(
                             $("<div>", { "class": "col-6" }).append(
@@ -295,8 +295,8 @@ $(function ()
                             $("<div>", { "class": "col-6 fw-bold" }).append(
                                 $("<h2>").text(`${obj.temp}\u00B0`),
                                 $("<p>").append(
-                                    $("<span>", { "class": "material-symbols-outlined fs-5" }).text(`\u25B2${obj.hiTemp}\u00B0\xa0`),
-                                    $("<span>", { "class": "material-symbols-outlined fs-5" }).text(`\u25BC${obj.loTemp}\u00B0`)
+                                    $("<span>", { "class": "fs-5 text-danger fw-bold" }).text(`\u25B2${obj.hiTemp}\u00B0\xa0`),
+                                    $("<span>", { "class": "fs-5 text-info fw-bold" }).text(`\u25BC${obj.loTemp}\u00B0`)
                                 )
                             ),
                             $("<div>", { "class": "col-6" }).append(
@@ -323,8 +323,14 @@ $(function ()
                         $("<img>", { "class": "w-100", "src": `${obj.icon[0]}`, "alt": "Rain Cloud" }),
                         $("<p>", { "id": "day-of-week", "class": "text-nowrap overflow-hidden" }).text(`${obj.day}`),
                         $("<p>").append(
-                            $("<span>", { "class": "material-symbols-outlined fs-5" }).text(`${obj.hiTemp}\u00B0\xa0`),
-                            $("<span>", { "class": "material-symbols-outlined fs-5" }).text(`${obj.loTemp}\u00B0`)
+                            $("<span>", { "class": "fs-5 text-danger fw-bold" }).text(`${obj.hiTemp}\u00B0\xa0`),
+                            $("<span>", { "class": "fs-5 text-info fw-bold" }).text(`${obj.loTemp}\u00B0`)
+                        ),
+                        $("<p>").append(
+                            $("<span>", { "class": "fs-6 fw-semibold" }).text(`${obj.windSpeed}m\\h ${obj.windDirection}`)
+                        ),
+                        $("<p>").append(
+                            $("<span>", { "class": "fs-6 fw-semibold" }).text(`${obj.humidity}\u0025\xa0`)
                         )
                     )
                 )
@@ -332,9 +338,11 @@ $(function ()
         }
     }
 
+    // Creates the clickable buttons for recent searches
     function displayRecentSearch()
     {
         let previousSearch = getLocalStorage();
+        // Reverse the order of the array for display purposes
         previousSearch = previousSearch.reverse();
 
         // Clear current child buttons
@@ -348,6 +356,7 @@ $(function ()
         });
     }
 
+    // Takes the click event from recent searches
     function getRecentSearch(event)
     {
         let eventText = event.target.textContent;
@@ -363,7 +372,9 @@ $(function ()
     function setLocalStorage(obj)
     {
         // Only need city and state names saved
-        let tmpValue = obj.name + ", " + obj.state;
+        // Clear any null or undefined values   
+        let tmpValue = (obj.name == null) ? "" : obj.name;
+        tmpValue += (obj.state == null) ? "" : ", " + obj.state;
         let storage = JSON.parse(localStorage.getItem("recentSearches"));
 
         if (storage)
@@ -405,7 +416,6 @@ $(function ()
         {
             requestLocation("United States");
         }
-
     }
 
     previousSectionEl.on("click", getRecentSearch);
