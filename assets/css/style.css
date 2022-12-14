@@ -5,6 +5,7 @@
 body {
     font-family: serif;
     font-size: 100%;
+    background-color:rgb(182, 226, 255);
 }
 
 h1,
@@ -20,6 +21,8 @@ h2 {
 main {
     max-width: 1440px;
 }
+
+footer{height: 40vh}
 
 .card p {
     font-size: 1.5rem;
@@ -37,8 +40,4 @@ main {
 
 #future-section .card p {
     font-size: 1rem;
-}
-
-@media (max-width: 768p) {
-
 }
