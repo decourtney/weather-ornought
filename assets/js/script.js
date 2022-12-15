@@ -300,7 +300,7 @@ $(function ()
                                 )
                             ),
                             $("<div>", { "class": "col-6" }).append(
-                                $("<img>", { "class": "w-100", "src": `${obj.icon[0]}`, "alt": "Rain Cloud" }),
+                                $("<img>", { "class": "w-100", "src": `${obj.icon[0]}`, "alt": `${obj.iconLabel}` }),
                                 $("<figcaption>", { "class": "fs-5 text-center" }).text(`${obj.iconLabel}`)
                             )
                         ),
@@ -320,7 +320,7 @@ $(function ()
             el.append(
                 $("<div>", { "class": "card d-inline-flex m-1 text-center shadow" }).append(
                     $("<div>", { "id": "day-card-" + index, "class": "card-body" }).append(
-                        $("<img>", { "class": "w-100", "src": `${obj.icon[0]}`, "alt": "Rain Cloud" }),
+                        $("<img>", { "class": "w-100", "src": `${obj.icon[0]}`, "alt": `${obj.iconLabel}` }),
                         $("<p>", { "id": "day-of-week", "class": "text-nowrap overflow-hidden" }).text(`${obj.day}`),
                         $("<p>").append(
                             $("<span>", { "class": "fs-5 text-danger fw-bold" }).text(`${obj.hiTemp}\u00B0\xa0`),
